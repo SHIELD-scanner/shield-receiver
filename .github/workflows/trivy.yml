@@ -13,11 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build an image from Dockerfile
-        run: docker build -t docker.io/my-organization/my-app:${{ github.sha }} .
+        run: docker build -t ghcr.io/shield-scanner/shield-receiver/shield-receiver:${{ github.sha }} .
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: 'docker pull ghcr.io/shield-scanner/shield-receiver/shield-receiver:${{ github.sha }}'
+          image-ref: 'ghcr.io/shield-scanner/shield-receiver/shield-receiver:${{ github.sha }}'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
