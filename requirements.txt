@@ -1,0 +1,6 @@
+# Requirements for the gRPC Receiver Service
+grpcio
+grpcio-tools
+protobuf
+pymongo
+python-dotenv
