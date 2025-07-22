@@ -15,9 +15,9 @@ metadata:
   namespace: shield-receiver
   name: shield-receiver-role
 rules:
-- apiGroups: [""]
-  resources: ["pods", "services", "endpoints"]
-  verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -25,9 +25,9 @@ metadata:
   name: shield-receiver-rolebinding
   namespace: shield-receiver
 subjects:
-- kind: ServiceAccount
-  name: shield-receiver
-  namespace: shield-receiver
+  - kind: ServiceAccount
+    name: shield-receiver
+    namespace: shield-receiver
 roleRef:
   kind: Role
   name: shield-receiver-role
