@@ -1,26 +1,25 @@
-"""
-Example gRPC Receiver Service
+"""Example gRPC Receiver Service.
 
 This is a sample implementation of the gRPC receiver service that handles
 the data sent from the shield controller and writes it to MongoDB.
-
 This service should be deployed separately from the controller.
 """
 
-import grpc
+
 import json
 import logging
-from concurrent import futures
-from pymongo import MongoClient
 import os
+from concurrent import futures
+
+import grpc
 from dotenv import load_dotenv
+from pymongo import MongoClient
+
+import sync_service_pb2
+import sync_service_pb2_grpc
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Import the generated gRPC classes
-import sync_service_pb2
-import sync_service_pb2_grpc
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +35,7 @@ db = mongo_client[MONGO_DB]
 
 
 class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
+
     """gRPC service implementation that receives data and stores it in MongoDB"""
 
     def SyncResource(self, request, context):

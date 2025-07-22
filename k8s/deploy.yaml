@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shield-receiver
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: shield-receiver
+  namespace: shield-receiver
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: shield-receiver
+  name: shield-receiver-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: shield-receiver-rolebinding
+  namespace: shield-receiver
+subjects:
+- kind: ServiceAccount
+  name: shield-receiver
+  namespace: shield-receiver
+roleRef:
+  kind: Role
+  name: shield-receiver-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shield-receiver-pvc
+  namespace: shield-receiver
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shield-receiver
+  labels:
+    app: shield-receiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shield-receiver
+  template:
+    metadata:
+      labels:
+        app: shield-receiver
+    spec:
+      serviceAccountName: shield-receiver
+      automountServiceAccountToken: true
+      containers:
+        - name: shield-receiver
+          image: <your-docker-image>:1.0.0 # Use a specific version tag
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          # Add more env variables as needed
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+              storage: "1Gi"
+          volumeMounts:
+            - name: shield-receiver-storage
+              mountPath: /data
+      volumes:
+        - name: shield-receiver-storage
+          persistentVolumeClaim:
+            claimName: shield-receiver-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shield-receiver
+spec:
+  selector:
+    app: shield-receiver
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP

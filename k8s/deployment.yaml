@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shield-receiver
+  labels:
+    app: shield-receiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shield-receiver
+  template:
+    metadata:
+      labels:
+        app: shield-receiver
+    spec:
+      serviceAccountName: shield-receiver
+      automountServiceAccountToken: true
+      containers:
+        - name: shield-receiver
+          image: <your-docker-image>:1.0.0 # Use a specific version tag
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          # Add more env variables as needed
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+              storage: "1Gi"
+          volumeMounts:
+            - name: shield-receiver-storage
+              mountPath: /data
+      volumes:
+        - name: shield-receiver-storage
+          persistentVolumeClaim:
+            claimName: shield-receiver-pvc
