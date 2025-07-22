@@ -9,6 +9,9 @@ This service should be deployed separately from the controller.
 
 import json
 import logging
+
+import json
+import logging
 import os
 from concurrent import futures
 
@@ -18,7 +21,6 @@ from pymongo import MongoClient
 
 import sync_service_pb2
 import sync_service_pb2_grpc
-
 # Load environment variables from .env file
 load_dotenv()
 
