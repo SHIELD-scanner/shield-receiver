@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: shield-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: shield
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  grpc-receiver:
+    build: .
+    container_name: shield-grpc-receiver
+    restart: unless-stopped
+    environment:
+      MONGO_URI: mongodb://admin:password@mongodb:27017/
+      MONGO_DB: shield
+      GRPC_PORT: 50051
+    ports:
+      - "50051:50051"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./.env:/app/.env
+
+volumes:
+  mongodb_data:
