@@ -2,6 +2,7 @@
 
 This is a sample implementation of the gRPC receiver service that handles
 the data sent from the shield controller and writes it to MongoDB.
+
 This service should be deployed separately from the controller.
 """
 
@@ -43,7 +44,7 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
         try:
             # Parse the JSON data
             data = json.loads(request.data_json)
-            
+
             # Create the document structure (same as original controller)
             doc = {
                 "_event_type": request.event_type,
@@ -53,7 +54,7 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
                 "_cluster": request.cluster,
                 "data": data,
             }
-            
+
             # Store in MongoDB
             uid = request.uid
             if not uid:
@@ -62,21 +63,21 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
                     success=False,
                     message="No UID provided"
                 )
-            
+
             # Replace/upsert the document
             db[request.resource_type].replace_one(
                 {"_uid": uid}, 
                 {"_uid": uid, **doc}, 
                 upsert=True
             )
-            
+
             logger.info(f"Synced {request.resource_type} {request.name} ({request.event_type})")
-            
+
             return sync_service_pb2.SyncResourceResponse(
                 success=True,
                 message=f"Successfully synced {request.resource_type} {request.name}"
             )
-            
+
         except Exception as e:
             logger.error(f"Error syncing resource: {e}")
             return sync_service_pb2.SyncResourceResponse(
@@ -89,7 +90,7 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
         try:
             # Parse the JSON data
             data = json.loads(request.data_json)
-            
+
             # Create the document structure (same as original controller)
             doc = {
                 "_event_type": request.event_type,
@@ -98,7 +99,7 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
                 "_cluster": request.cluster,
                 "data": data,
             }
-            
+
             # Store in MongoDB
             uid = request.uid
             if not uid:
@@ -107,21 +108,21 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
                     success=False,
                     message="No UID provided"
                 )
-            
+
             # Replace/upsert the document
             db["namespaces"].replace_one(
                 {"_uid": uid}, 
                 {"_uid": uid, **doc}, 
                 upsert=True
             )
-            
+
             logger.info(f"Synced namespace {request.name} ({request.event_type})")
-            
+
             return sync_service_pb2.SyncNamespaceResponse(
                 success=True,
                 message=f"Successfully synced namespace {request.name}"
             )
-            
+
         except Exception as e:
             logger.error(f"Error syncing namespace: {e}")
             return sync_service_pb2.SyncNamespaceResponse(
@@ -134,20 +135,20 @@ def serve():
     """Start the gRPC server"""
     port = os.environ.get("GRPC_PORT", "50051")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    
+
     # Add the servicer to the server
     sync_service_pb2_grpc.add_SyncServiceServicer_to_server(
         SyncServiceServicer(), server
     )
-    
+
     # Listen on all interfaces
     server.add_insecure_port(f'[::]:{port}')
-    
+
     # Start the server
     server.start()
     logger.info(f"gRPC Receiver Service started on port {port}")
     logger.info(f"Connected to MongoDB: {MONGO_URI}")
-    
+
     # Keep the server running
     try:
         server.wait_for_termination()
