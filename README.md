@@ -1,5 +1,8 @@
 # Shield gRPC Receiver Service
 
+[![trivy](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/trivy.yml/badge.svg)](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/trivy.yml)
+[![Build and Push Docker image](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/docker-publish.yml)
+
 A gRPC service that receives security scan data from Shield Controllers and stores it in MongoDB.
 
 ## Overview
