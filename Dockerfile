@@ -3,7 +3,8 @@ FROM python:3.13-alpine
 WORKDIR /app
 
 # Install build dependencies for compiling Python packages
-RUN apk add --no-cache \
+RUN apk update && \
+    apk add --no-cache \
     gcc \
     musl-dev \
     linux-headers \
