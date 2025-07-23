@@ -8,6 +8,8 @@ This service should be deployed separately from the controller.
 
 
 
+import sentry_sdk
+
 import json
 import logging
 import os
@@ -22,6 +24,15 @@ import sync_service_pb2_grpc
 
 # Load environment variables from .env file
 load_dotenv()
+
+sentry_dsn = os.environ.get("DSN")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        # Add data like request headers and IP for users,
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        send_default_pii=True,
+    )
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

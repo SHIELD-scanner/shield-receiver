@@ -6,6 +6,8 @@
 #
 black==25.1.0
     # via shield-receiver (pyproject.toml)
+certifi==2025.7.14
+    # via sentry-sdk
 click==8.2.1
     # via black
 dnspython==2.7.0
@@ -36,6 +38,10 @@ python-dotenv==1.1.1
     # via shield-receiver (pyproject.toml)
 ruff==0.12.4
     # via shield-receiver (pyproject.toml)
+sentry-sdk==2.33.2
+    # via shield-receiver (pyproject.toml)
+urllib3==2.5.0
+    # via sentry-sdk
 validate-pyproject==0.24.1
     # via shield-receiver (pyproject.toml)
 
