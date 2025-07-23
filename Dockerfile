@@ -1,6 +1,13 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
 WORKDIR /app
+
+# Install build dependencies for compiling Python packages
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    linux-headers \
+    && rm -rf /var/cache/apk/*
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
