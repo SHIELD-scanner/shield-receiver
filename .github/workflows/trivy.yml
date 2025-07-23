@@ -15,7 +15,7 @@ jobs:
       - name: Build an image from Dockerfile
         run: docker build -t ghcr.io/shield-scanner/shield-receiver/shield-receiver:${{ github.sha }} .
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.32.0
         with:
           image-ref: 'ghcr.io/shield-scanner/shield-receiver/shield-receiver:${{ github.sha }}'
           format: 'table'
