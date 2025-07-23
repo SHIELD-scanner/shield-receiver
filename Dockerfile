@@ -2,8 +2,8 @@ FROM python:3.13-alpine
 
 WORKDIR /app
 
-# Install build dependencies for compiling Python packages
 RUN apk update && \
+    apk upgrade && \
     apk add --no-cache \
     gcc \
     musl-dev \
@@ -23,6 +23,16 @@ RUN python -m grpc_tools.protoc \
     --python_out=. \
     --grpc_python_out=. \
     sync_service.proto
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+# Change ownership of app directory to non-root user
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose gRPC port
 EXPOSE 50051
