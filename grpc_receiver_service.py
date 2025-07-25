@@ -56,6 +56,14 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
         try:
             # Parse the JSON data
             data = json.loads(request.data_json)
+            
+            if request.event_type == "DELETED": 
+                db[request.resource_type].delete_one({"_uid": request.uid})
+                logger.info(f"Deleted {request.resource_type} {request.name} ({request.event_type})")
+                return sync_service_pb2.SyncResourceResponse(
+                    success=True,
+                    message=f"Successfully deleted {request.resource_type} {request.name}"
+                )
 
             # Create the document structure (same as original controller)
             doc = {
@@ -102,6 +110,14 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
         try:
             # Parse the JSON data
             data = json.loads(request.data_json)
+            
+            if request.event_type == "DELETED": 
+                db["namespaces"].delete_one({"_uid": request.uid})
+                logger.info(f"Deleted namespace {request.name} ({request.event_type})")
+                return sync_service_pb2.SyncNamespaceResponse(
+                    success=True,
+                    message=f"Successfully deleted namespace {request.name}"
+                )
 
             # Create the document structure (same as original controller)
             doc = {
