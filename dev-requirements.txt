@@ -14,7 +14,7 @@ dnspython==2.7.0
     # via pymongo
 fastjsonschema==2.21.1
     # via validate-pyproject
-grpcio==1.73.1
+grpcio==1.74.0
     # via
     #   grpcio-tools
     #   shield-receiver (pyproject.toml)
