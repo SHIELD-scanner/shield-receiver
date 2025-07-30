@@ -22,7 +22,7 @@ pymongo==4.13.2
     # via shield-receiver (pyproject.toml)
 python-dotenv==1.1.1
     # via shield-receiver (pyproject.toml)
-sentry-sdk==2.33.2
+sentry-sdk==2.34.0
     # via shield-receiver (pyproject.toml)
 urllib3==2.5.0
     # via sentry-sdk
