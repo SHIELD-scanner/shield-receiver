@@ -38,7 +38,7 @@ python-dotenv==1.1.1
     # via shield-receiver (pyproject.toml)
 ruff==0.12.7
     # via shield-receiver (pyproject.toml)
-sentry-sdk==2.33.2
+sentry-sdk==2.34.1
     # via shield-receiver (pyproject.toml)
 urllib3==2.5.0
     # via sentry-sdk
