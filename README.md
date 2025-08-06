@@ -3,24 +3,33 @@
 [![trivy](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/trivy.yml/badge.svg)](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/trivy.yml)
 [![Build and Push Docker image](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/SHIELD-scanner/shield-receiver/actions/workflows/docker-publish.yml)
 
-A gRPC service that receives security scan data from Shield Controllers and stores it in MongoDB.
+A gRPC service that receives security scan data from Shield Controllers and stores it in your choice of MongoDB or PostgreSQL.
 
 ## Overview
 
-This service acts as a receiver for the Shield Controller's gRPC-based architecture. Instead of the controller directly connecting to MongoDB, it sends data via gRPC to this receiver service, which then handles all MongoDB operations.
+This service acts as a receiver for the Shield Controller's gRPC-based architecture. Instead of the controller directly connecting to a database, it sends data via gRPC to this receiver service, which then handles all database operations using a configurable database backend.
 
 ## Architecture
 
 ```
-Shield Controller → gRPC Receiver Service → MongoDB
+Shield Controller → gRPC Receiver Service → Database (MongoDB or PostgreSQL)
 ```
+
+## Database Support
+
+The service supports two database backends:
+
+- **MongoDB** - Document-oriented NoSQL database (default)
+- **PostgreSQL** - Relational SQL database with JSONB support
+
+Choose your database by setting the `DATABASE_TYPE` environment variable. See [DATABASES_CONFIG.md](DATABASES_CONFIG.md) for detailed configuration instructions.
 
 ## Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
-- MongoDB instance
+- Database instance (MongoDB or PostgreSQL)
 - Access to Shield Controller's gRPC calls
 
 ### Installation
@@ -35,7 +44,8 @@ Shield Controller → gRPC Receiver Service → MongoDB
 
    ```bash
    cp .env.example .env
-   # Edit .env with your MongoDB connection details
+   # Edit .env with your database connection details
+   # See DATABASES_CONFIG.md for detailed configuration options
    ```
 
 3. **Generate gRPC code:**
@@ -55,24 +65,48 @@ Shield Controller → gRPC Receiver Service → MongoDB
 
 ## Configuration
 
-Configure the service using environment variables in a `.env` file:
+Configure the service using environment variables in a `.env` file. The service supports both MongoDB and PostgreSQL backends with full thread safety for concurrent gRPC requests.
+
+### Thread Safety
+
+The service uses a gRPC `ThreadPoolExecutor` to handle multiple concurrent requests:
+
+- **MongoDB**: Uses thread-safe PyMongo client
+- **PostgreSQL**: Uses a thread-safe connection pool to handle concurrent database operations
+
+### Quick Configuration Examples
+
+**MongoDB (Default):**
 
 ```bash
-# MongoDB Configuration
+DATABASE_TYPE=mongo
 MONGO_URI=mongodb://localhost:27017/
 MONGO_DB=shield
-
-# gRPC Server Configuration
 GRPC_PORT=50051
 ```
 
+**PostgreSQL:**
+
+```bash
+DATABASE_TYPE=postgres
+POSTGRES_URI=postgresql://username:password@localhost:5432/shield
+# Optional: Connection pool settings
+POSTGRES_MIN_CONNECTIONS=1
+POSTGRES_MAX_CONNECTIONS=20
+GRPC_PORT=50051
+```
+
+For detailed configuration options, see [DATABASES_CONFIG.md](DATABASES_CONFIG.md).
+
 ### Environment Variables
 
-| Variable    | Description               | Default                      |
-| ----------- | ------------------------- | ---------------------------- |
-| `MONGO_URI` | MongoDB connection string | `mongodb://localhost:27017/` |
-| `MONGO_DB`  | MongoDB database name     | `shield`                     |
-| `GRPC_PORT` | Port for gRPC server      | `50051`                      |
+| Variable        | Description                    | Default                      |
+| --------------- | ------------------------------ | ---------------------------- |
+| `DATABASE_TYPE` | Database type (mongo/postgres) | `mongo`                      |
+| `MONGO_URI`     | MongoDB connection string      | `mongodb://localhost:27017/` |
+| `MONGO_DB`      | MongoDB database name          | `shield`                     |
+| `POSTGRES_URI`  | PostgreSQL connection string   | -                            |
+| `GRPC_PORT`     | Port for gRPC server           | `50051`                      |
 
 ## API Reference
 
@@ -116,9 +150,27 @@ Receives and stores Kubernetes namespace information.
 
 ## Data Storage
 
-The service stores data in MongoDB with the following structure:
+The service stores data using a consistent schema across both database backends:
 
-### Resource Documents
+### MongoDB Storage
+
+Data is stored in collections:
+
+- **Resource Collections**: `{resource_type}` (e.g., `pods`, `deployments`, `services`)
+- **Namespace Collection**: `namespaces`
+
+### PostgreSQL Storage
+
+Data is stored in structured tables:
+
+- **Resources Table**: Contains all resource types with JSONB data column
+- **Namespaces Table**: Contains namespace information with JSONB data column
+
+### Document Structure
+
+Regardless of the database backend, documents follow this structure:
+
+**Resource Documents:**
 
 ```json
 {
@@ -134,7 +186,7 @@ The service stores data in MongoDB with the following structure:
 }
 ```
 
-### Namespace Documents
+**Namespace Documents:**
 
 ```json
 {
@@ -149,6 +201,8 @@ The service stores data in MongoDB with the following structure:
 }
 ```
 
+For detailed schema information and migration guides, see [DATABASES_CONFIG.md](DATABASES_CONFIG.md).
+
 ## Development
 
 ### Project Structure
@@ -157,8 +211,15 @@ The service stores data in MongoDB with the following structure:
 grpc-receiver/
 ├── grpc_receiver_service.py    # Main service implementation
 ├── sync_service.proto          # gRPC service definition
+├── database/                   # Database abstraction layer
+│   ├── __init__.py
+│   ├── base.py                # Database interface
+│   ├── factory.py             # Database factory
+│   ├── mongodb.py             # MongoDB implementation
+│   └── postgresql.py          # PostgreSQL implementation
 ├── requirements.txt            # Python dependencies
 ├── .env.example               # Environment configuration template
+├── DATABASES_CONFIG.md        # Database configuration guide
 └── README.md                  # This file
 ```
 
@@ -174,39 +235,39 @@ After running the protoc command, these files will be generated:
 1. Update `sync_service.proto` if changing the gRPC interface
 2. Regenerate gRPC code using the protoc command
 3. Update `grpc_receiver_service.py` with new logic
-4. Update MongoDB schema documentation if needed
+4. If adding database operations, update the database interface in `database/base.py`
+5. Implement the new operations in both `database/mongodb.py` and `database/postgresql.py`
+6. Update documentation if needed
+
+### Adding New Database Backends
+
+1. Create a new file in the `database/` directory (e.g., `database/redis.py`)
+2. Implement the `DatabaseClient` interface from `database/base.py`
+3. Add the new backend to `database/factory.py`
+4. Update documentation and configuration examples
 
 ## Deployment
 
 ### Docker
 
-Create a `Dockerfile`:
+The included `Dockerfile` and `docker-compose.yml` support both database backends.
 
-```dockerfile
-FROM python:3.11-slim
+**With MongoDB (default):**
 
-WORKDIR /app
+```bash
+docker-compose up -d
+```
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+**With PostgreSQL:**
+Edit `docker-compose.yml` to uncomment the PostgreSQL service configuration, then:
 
-COPY . .
-
-# Generate gRPC code
-RUN python -m grpc_tools.protoc \
-    --proto_path=. \
-    --python_out=. \
-    --grpc_python_out=. \
-    sync_service.proto
-
-EXPOSE 50051
-
-CMD ["python", "grpc_receiver_service.py"]
+```bash
+docker-compose up -d
 ```
 
 ### Kubernetes
 
-Example deployment:
+Example deployment with configurable database:
 
 ```yaml
 apiVersion: apps/v1
@@ -229,6 +290,9 @@ spec:
           ports:
             - containerPort: 50051
           env:
+            - name: DATABASE_TYPE
+              value: "mongo" # or "postgres"
+            # MongoDB configuration
             - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
@@ -236,6 +300,12 @@ spec:
                   key: uri
             - name: MONGO_DB
               value: "shield"
+            # PostgreSQL configuration (if using postgres)
+            # - name: POSTGRES_URI
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: postgres-secret
+            #       key: uri
 ---
 apiVersion: v1
 kind: Service
@@ -252,17 +322,28 @@ spec:
 
 ## Monitoring
 
-The service logs important events:
+The service logs important events and supports both database backends:
 
 - Successful/failed resource syncs
-- MongoDB connection status
+- Database connection status and type
 - gRPC server startup/shutdown
+- Database health checks
 
 Example log output:
 
 ```
 INFO:grpc-receiver:gRPC Receiver Service started on port 50051
-INFO:grpc-receiver:Connected to MongoDB: mongodb://localhost:27017/
+INFO:grpc-receiver:Connected to MONGO database
+INFO:grpc-receiver:Using MONGO database
+INFO:grpc-receiver:Synced vulnerabilityreports test-resource (ADDED)
+```
+
+Or with PostgreSQL:
+
+```
+INFO:grpc-receiver:Connected to PostgreSQL
+INFO:grpc-receiver:PostgreSQL tables created/verified
+INFO:grpc-receiver:Using POSTGRES database
 INFO:grpc-receiver:Synced vulnerabilityreports test-resource (ADDED)
 ```
 
@@ -272,15 +353,17 @@ INFO:grpc-receiver:Synced vulnerabilityreports test-resource (ADDED)
 
 **Service won't start:**
 
-- Check MongoDB connection string in `.env`
-- Verify port 50051 is available
-- Ensure gRPC code is generated
+- Check database connection configuration in `.env`
+- Verify the selected database is running and accessible
+- Ensure port 50051 is available
+- Confirm gRPC code is generated
 
-**No data in MongoDB:**
+**No data in database:**
 
-- Check MongoDB credentials and network access
+- Check database credentials and network access
 - Verify Shield Controller is configured with correct gRPC endpoint
 - Review service logs for error messages
+- Test database connectivity with health check
 
 **Connection refused from controller:**
 
@@ -288,12 +371,34 @@ INFO:grpc-receiver:Synced vulnerabilityreports test-resource (ADDED)
 - Check firewall/network policies
 - Confirm gRPC port configuration matches
 
+**Database-specific issues:**
+
+For detailed troubleshooting of MongoDB and PostgreSQL issues, see [DATABASES_CONFIG.md](DATABASES_CONFIG.md).
+
+### Health Checks
+
+Both database backends support health checks:
+
+```python
+# Example health check usage
+if db_client.health_check():
+    print("Database is healthy")
+else:
+    print("Database connection failed")
+```
+
 ## Security Considerations
 
-- Use MongoDB authentication in production
+- Use database authentication in production for both MongoDB and PostgreSQL
 - Consider TLS for gRPC communication
 - Implement proper logging without exposing sensitive data
 - Use network policies to restrict access to the service
+- Secure database connection strings and credentials
+- For PostgreSQL, ensure SSL connections in production environments
+
+## Migration Between Databases
+
+The service supports switching between database backends. See [DATABASES_CONFIG.md](DATABASES_CONFIG.md) for migration guides and best practices when switching from MongoDB to PostgreSQL or vice versa.
 
 ## License
 
