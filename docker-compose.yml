@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # MongoDB service (default database)
   mongodb:
     image: mongo:8
     container_name: shield-mongodb
@@ -14,11 +15,27 @@ services:
     volumes:
       - mongodb_data:/data/db
 
+  # PostgreSQL service (alternative database)
+  postgres:
+    image: postgres:16
+    container_name: shield-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shield
+      POSTGRES_USER: shield
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # gRPC Receiver with MongoDB (default configuration)
   grpc-receiver:
     build: .
     container_name: shield-grpc-receiver
     restart: unless-stopped
     environment:
+      DATABASE_TYPE: mongo
       MONGO_URI: mongodb://admin:password@mongodb:27017/
       MONGO_DB: shield
       GRPC_PORT: 50051
@@ -29,5 +46,23 @@ services:
     volumes:
       - ./.env:/app/.env
 
+  # Alternative gRPC Receiver with PostgreSQL
+  # Uncomment and comment out the above grpc-receiver service to use PostgreSQL
+  # grpc-receiver-postgres:
+  #   build: .
+  #   container_name: shield-grpc-receiver-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     DATABASE_TYPE: postgres
+  #     POSTGRES_URI: postgresql://shield:password@postgres:5432/shield
+  #     GRPC_PORT: 50051
+  #   ports:
+  #     - "50051:50051"
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./.env:/app/.env
+
 volumes:
   mongodb_data:
+  postgres_data:
