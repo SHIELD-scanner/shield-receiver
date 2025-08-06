@@ -47,6 +47,7 @@ except Exception as e:
 
 
 class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
+
     """gRPC service implementation that receives data and stores it in the configured database"""
 
     def SyncResource(self, request, context):
