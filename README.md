@@ -65,7 +65,14 @@ Choose your database by setting the `DATABASE_TYPE` environment variable. See [D
 
 ## Configuration
 
-Configure the service using environment variables in a `.env` file. The service supports both MongoDB and PostgreSQL backends.
+Configure the service using environment variables in a `.env` file. The service supports both MongoDB and PostgreSQL backends with full thread safety for concurrent gRPC requests.
+
+### Thread Safety
+
+The service uses a gRPC `ThreadPoolExecutor` to handle multiple concurrent requests:
+
+- **MongoDB**: Uses thread-safe PyMongo client
+- **PostgreSQL**: Uses a thread-safe connection pool to handle concurrent database operations
 
 ### Quick Configuration Examples
 
@@ -83,6 +90,9 @@ GRPC_PORT=50051
 ```bash
 DATABASE_TYPE=postgres
 POSTGRES_URI=postgresql://username:password@localhost:5432/shield
+# Optional: Connection pool settings
+POSTGRES_MIN_CONNECTIONS=1
+POSTGRES_MAX_CONNECTIONS=20
 GRPC_PORT=50051
 ```
 
