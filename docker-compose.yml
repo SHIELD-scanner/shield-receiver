@@ -36,15 +36,13 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_TYPE: mongo
-      MONGO_URI: mongodb://admin:password@mongodb:27017/
       MONGO_DB: shield
       GRPC_PORT: 50051
+      MONGO_URI: "mongodb://admin:password@localhost:27018/shield-database?authSource=admin"
     ports:
       - "50051:50051"
     depends_on:
       - mongodb
-    volumes:
-      - ./.env:/app/.env
 
   # Alternative gRPC Receiver with PostgreSQL
   # Uncomment and comment out the above grpc-receiver service to use PostgreSQL

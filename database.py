@@ -29,9 +29,9 @@ class MongoDatabaseClient:
         self.db = None
 
     def connect(self) -> None:
-        if self.client:
+        if self.client is not None:
             return
-        if not self.uri:
+        if self.uri is None:
             raise RuntimeError("MONGO_URI is not set")
 
         # Short timeout so failures surface quickly during service startup
@@ -41,13 +41,15 @@ class MongoDatabaseClient:
         self.db = self.client[self.db_name]
 
     def disconnect(self) -> None:
-        if self.client:
+        if self.client is not None:
             self.client.close()
             self.client = None
             self.db = None
 
-    def upsert_resource(self, resource_type: str, uid: str, doc: dict[str, Any]) -> bool:
-        if not self.db:
+    def upsert_resource(
+        self, resource_type: str, uid: str, doc: dict[str, Any]
+    ) -> bool:
+        if self.db is None:
             raise RuntimeError("Database not connected")
         try:
             coll = self.db[resource_type]
@@ -60,7 +62,7 @@ class MongoDatabaseClient:
             return False
 
     def delete_resource(self, resource_type: str, uid: str) -> bool:
-        if not self.db:
+        if self.db is None:
             raise RuntimeError("Database not connected")
         try:
             coll = self.db[resource_type]

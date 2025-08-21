@@ -53,10 +53,12 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
     def SyncResource(self, request, context):
         """Handle resource sync requests"""
         try:
+            if db_client is None:
+                raise RuntimeError("Database client is not initialized")
             # Parse the JSON data
             data = json.loads(request.data_json)
-            
-            if request.event_type == "DELETED": 
+
+            if request.event_type == "DELETED":
                 success = db_client.delete_resource(request.resource_type, request.uid)
                 if success:
                     logger.info(f"Deleted {request.resource_type} {request.name} ({request.event_type})")
@@ -91,7 +93,7 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
 
             # Upsert the document
             success = db_client.upsert_resource(request.resource_type, uid, doc)
-            
+
             if success:
                 logger.info(f"Synced {request.resource_type} {request.name} ({request.event_type})")
                 return sync_service_pb2.SyncResourceResponse(
@@ -114,10 +116,12 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
     def SyncNamespace(self, request, context):
         """Handle namespace sync requests"""
         try:
+            if db_client is None:
+                raise RuntimeError("Database client is not initialized")
             # Parse the JSON data
             data = json.loads(request.data_json)
-            
-            if request.event_type == "DELETED": 
+
+            if request.event_type == "DELETED":
                 success = db_client.delete_namespace(request.uid)
                 if success:
                     logger.info(f"Deleted namespace {request.name} ({request.event_type})")
@@ -151,7 +155,7 @@ class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
 
             # Upsert the document
             success = db_client.upsert_namespace(uid, doc)
-            
+
             if success:
                 logger.info(f"Synced namespace {request.name} ({request.event_type})")
                 return sync_service_pb2.SyncNamespaceResponse(
