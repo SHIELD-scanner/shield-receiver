@@ -36,32 +36,33 @@ Choose your database by setting the `DATABASE_TYPE` environment variable. See [D
 
 1. **Install dependencies:**
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+  ```bash
+  pip install -r requirements.txt
+  ```
 
-2. **Configure environment variables:**
+1. **Configure environment variables:**
 
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database connection details
-   # See DATABASES_CONFIG.md for detailed configuration options
-   ```
+  ```bash
+  cp .env.example .env
+  # Edit .env with your database connection details
+  # See DATABASES_CONFIG.md for detailed configuration options
+  ```
 
-3. **Generate gRPC code:**
+1. **Generate gRPC code:**
 
-   ```bash
-   python -m grpc_tools.protoc \
-       --proto_path=. \
-       --python_out=. \
-       --grpc_python_out=. \
-       sync_service.proto
-   ```
+  ```bash
+  python -m grpc_tools.protoc \
+     --proto_path=. \
+     --python_out=. \
+     --grpc_python_out=. \
+     sync_service.proto
+  ```
 
-4. **Run the service:**
-   ```bash
-   python grpc_receiver_service.py
-   ```
+1. **Run the service:**
+
+  ```bash
+  python grpc_receiver_service.py
+  ```
 
 ## Configuration
 
@@ -397,6 +398,33 @@ else:
 - For PostgreSQL, ensure SSL connections in production environments
 
 ## Migration Between Databases
+
+## Running with PostgreSQL (local via docker-compose)
+
+An example Postgres service and a Postgres-backed receiver are included in `docker-compose.yml`.
+
+1. Start the services:
+
+```bash
+docker-compose up -d postgres grpc-receiver-postgres-example
+```
+
+2. The example receiver will be exposed on host port `50052` (container 50051).
+
+3. To run the integration test (requires Python dev deps and network access to the container):
+
+```bash
+# Make sure the project dependencies are installed
+pip install -r requirements.txt
+
+# Run pytest (default looks for tests/ and will connect to postgres on port 5433)
+POSTGRES_HOST=localhost POSTGRES_PORT=5433 POSTGRES_DB=shield POSTGRES_USER=shield POSTGRES_PASSWORD=password \
+  pytest -q
+```
+
+Notes:
+- The docker-compose example maps Postgres container port 5432 to host 5433 to avoid conflicts.
+- The test `tests/test_postgres_integration.py` performs a simple upsert and delete using psycopg2.
 
 The service supports switching between database backends. See [DATABASES_CONFIG.md](DATABASES_CONFIG.md) for migration guides and best practices when switching from MongoDB to PostgreSQL or vice versa.
 
