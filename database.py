@@ -20,9 +20,7 @@ from typing import Any
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 import psycopg2
-from psycopg2 import sql
 from psycopg2.extras import Json
-from psycopg2.errors import DatabaseError as PsycopgDatabaseError
 
 
 # Shared error messages
@@ -99,6 +97,7 @@ class DatabaseFactory:
 
 
 class PostgresDatabaseClient:
+
     """Postgres implementation of the simple database client used by the service.
 
     This stores resource documents as JSONB in a `resources` table and
@@ -156,7 +155,7 @@ class PostgresDatabaseClient:
                 )
         except Exception as e:
             # Normalize exceptions to RuntimeError so callers behave similarly
-            raise RuntimeError(f"Failed to connect to Postgres: {e}")
+            raise RuntimeError(f"Failed to connect to Postgres: {e}") from e
 
     def disconnect(self) -> None:
         if self.conn is not None:
