@@ -33,7 +33,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest grpcio-tools
+          # Install the package in editable mode so tests can import top-level modules
+          python -m pip install -e .
 
       - name: Wait for Postgres
         run: |
@@ -43,12 +45,14 @@ jobs:
           done
           echo "Postgres did not start in time" && exit 1
 
-      - name: Run tests
+      - name: Generate protos and run tests
+        run: |
+          # Generate Python protobuf modules if they are not checked in
+          python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. sync_service.proto || true
+          pytest -q
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           POSTGRES_DB: shield
           POSTGRES_USER: shield
           POSTGRES_PASSWORD: password
-        run: |
-          pytest -q
