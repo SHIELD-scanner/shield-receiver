@@ -36,14 +36,10 @@ if sentry_dsn:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("grpc-receiver")
 
-# Initialize database client
-try:
-    db_client = DatabaseFactory.create_client()
-    db_client.connect()
-    logger.info(f"Connected to {os.environ.get('DATABASE_TYPE', 'mongo').upper()} database")
-except Exception as e:
-    logger.error(f"Failed to initialize database: {e}")
-    raise
+# Initialize database client (do not connect at import time).
+# Connecting is performed when the server is started so tests can import
+# this module without triggering network calls.
+db_client = DatabaseFactory.create_client()
 
 
 class SyncServiceServicer(sync_service_pb2_grpc.SyncServiceServicer):
@@ -185,6 +181,14 @@ def serve():
     sync_service_pb2_grpc.add_SyncServiceServicer_to_server(
         SyncServiceServicer(), server
     )
+
+    # Connect to the database now that the server is starting.
+    try:
+        db_client.connect()
+        logger.info(f"Connected to {os.environ.get('DATABASE_TYPE', 'mongo').upper()} database")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        raise
 
     # Listen on all interfaces
     server.add_insecure_port(f'[::]:{port}')
