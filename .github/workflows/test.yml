@@ -6,8 +6,37 @@ on:
   pull_request:
 
 jobs:
-  tests:
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest grpcio-tools
+          python -m pip install -e .
+
+      - name: Generate protos
+        run: |
+          python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. sync_service.proto || true
+
+      - name: Run unit tests
+        run: |
+          pytest -q -k "not integration"
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: unit
     services:
       postgres:
         image: postgres:17
@@ -33,17 +62,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest psycopg2-binary grpcio-tools
+          python -m pip install -e .
 
       - name: Wait for Postgres
         run: |
-          # Wait until Postgres is ready
           for i in {1..30}; do
             pg_isready -h localhost -p 5432 -U shield -d shield && exit 0 || sleep 1
           done
           echo "Postgres did not start in time" && exit 1
 
-      - name: Run tests
+      - name: Generate protos
+        run: |
+          python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. sync_service.proto || true
+
+      - name: Run integration tests
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
@@ -51,4 +84,4 @@ jobs:
           POSTGRES_USER: shield
           POSTGRES_PASSWORD: password
         run: |
-          pytest -q
+          pytest -q -k integration
