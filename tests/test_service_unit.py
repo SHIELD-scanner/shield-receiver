@@ -1,6 +1,5 @@
 import json
 from unittest.mock import MagicMock, patch
-
 import sync_service_pb2
 import sync_service_pb2_grpc
 from grpc_receiver_service import SyncServiceServicer
