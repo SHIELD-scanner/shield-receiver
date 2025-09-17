@@ -18,7 +18,7 @@ grpcio==1.74.0
     # via
     #   grpcio-tools
     #   shield-receiver (pyproject.toml)
-grpcio-tools==1.74.0
+grpcio-tools==1.75.0
     # via shield-receiver (pyproject.toml)
 mypy-extensions==1.1.0
     # via black
