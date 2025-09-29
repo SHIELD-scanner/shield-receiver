@@ -12,7 +12,7 @@ grpcio==1.74.0
     # via
     #   grpcio-tools
     #   shield-receiver (pyproject.toml)
-grpcio-tools==1.74.0
+grpcio-tools==1.75.1
     # via shield-receiver (pyproject.toml)
 protobuf==6.32.0
     # via
