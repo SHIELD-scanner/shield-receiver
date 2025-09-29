@@ -17,7 +17,7 @@ services:
 
   # PostgreSQL service (alternative database)
   postgres:
-    image: postgres:17
+    image: postgres:18
     container_name: shield-postgres
     restart: unless-stopped
     environment:
