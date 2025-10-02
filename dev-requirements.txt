@@ -32,7 +32,7 @@ protobuf==6.32.0
     # via
     #   grpcio-tools
     #   shield-receiver (pyproject.toml)
-pymongo==4.14.1
+pymongo==4.15.2
     # via shield-receiver (pyproject.toml)
 python-dotenv==1.1.1
     # via shield-receiver (pyproject.toml)
