@@ -6,7 +6,7 @@
 #
 black==25.1.0
     # via shield-receiver (pyproject.toml)
-certifi==2025.8.3
+certifi==2026.2.25
     # via sentry-sdk
 click==8.2.1
     # via black
