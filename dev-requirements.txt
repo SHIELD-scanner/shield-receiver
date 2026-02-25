@@ -4,7 +4,7 @@
 #
 #    pip-compile --extra=dev --output-file=dev-requirements.txt --strip-extras pyproject.toml
 #
-black==25.1.0
+black==26.1.0
     # via shield-receiver (pyproject.toml)
 certifi==2025.8.3
     # via sentry-sdk
